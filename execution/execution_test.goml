@@ -90,7 +90,7 @@ fn loads_a_named_go_source_file() -> () {
 
 #[test]
 fn loads_generated_files_from_standard_library_sources() -> () {
-    let file = path::join(fixture("native_api"), "main.gom.go");
+    let file = path::join(fixture("native_api"), "main.goml.go");
     let loaded = testing::expect_ok(
         load_files(default_config(), Vec::from_array([file])),
         "generated source loading failed",
@@ -105,7 +105,7 @@ fn loads_generated_files_from_standard_library_sources() -> () {
 
 #[test]
 fn loads_generated_files_with_additional_standard_library_api() -> () {
-    let file = path::join(fixture("native_api_fallback"), "main.gom.go");
+    let file = path::join(fixture("native_api_fallback"), "main.goml.go");
     let loaded = testing::expect_ok(
         load_files(default_config(), Vec::from_array([file])),
         "generated source loading failed",
@@ -123,7 +123,7 @@ fn rejects_incomparable_standard_library_values_for_every_source_name() -> () {
     );
     testing::assert_ok(fs::create_dir_all(directory));
     let source = "package main\nimport \"bytes\"\nfunc main() { var left, right bytes.Buffer; println(left == right) }\n";
-    for name in Vec::from_array(["main.go", "main.gom.go", "goml_generated.go"]) {
+    for name in Vec::from_array(["main.go", "main.goml.go", "goml_generated.go"]) {
         let file = path::join(directory, name);
         testing::assert_ok(fs::write_file_structured(file, source));
         let loaded = testing::expect_ok(
