@@ -517,8 +517,7 @@ fn omits_unsupported_compiler_generated_aggregate_shells() -> () {
 #[test]
 fn lowers_gomlc_lexical_task_scope_product_with_native_methods() -> () {
     let root = env::current_dir_structured().unwrap_or(".");
-    let repository = path::parent(root).unwrap_or(root);
-    let file = path::join(repository, "gomlc/testdata/pipeline/242_lexical_task_scope/main.goml.go");
+    let file = path::join(root, "testdata/execute/pure/generated_task_scope/main.goml.go");
     let result = lowered_file(file);
     if !result.diagnostics.is_empty() {
         testing::fail(result.diagnostics[0].message);
