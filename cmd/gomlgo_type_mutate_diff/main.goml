@@ -27,7 +27,7 @@ fn main() -> () {
     let output = if arguments.len() >= 4 {
         arguments[3]
     } else {
-        "../_artifact/gomlgo-type-diff/failures"
+        "_artifact/gomlgo-type-diff/failures"
     };
     match mutation::run_typecheck(root, output, limit) {
         Ok(summary) => println(

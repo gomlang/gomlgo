@@ -22,33 +22,55 @@ The source importer evaluates `//go:build` and `// +build` constraints, GOOS/GOA
 
 ## Commands
 
-Run these recipes from the repository root. `just test` and `just ci` do not include this independent suite. Set `GOMLGO_GO` to a Go 1.26.x executable to select the oracle, source importer, interpreter, and GOROOT differential corpus together. When unset, selection uses `/usr/lib/go-1.26/bin/go` if present, then `go` on `PATH`; an explicitly empty value selects `go` on `PATH`. The recipes derive `GOROOT/src` from that executable and disable automatic Go toolchain switching. The main GoML build uses `go` on `PATH`, which must also meet its Go 1.26 minimum. For example, `PATH=/path/to/go1.26/bin:$PATH GOMLGO_GO=/path/to/go1.26/bin/go just gomlgo-test`.
+This standalone repository requires Linux amd64, Go 1.26.x, a C compiler for
+race tests, `just`, Bash, curl, tar and sha256sum. It builds with the released
+GoML 0.1.57 toolchain; no GoML compiler checkout is needed.
+
+Install the checksum-pinned release with `just toolchain`, then run `just build`
+or `just test`. The installer writes only to `_artifact/`. Set `GOML` to an
+absolute path to use an existing compatible GoML installation instead. Its
+executable-relative `lib/` and finalized compiler world must be present.
+
+Set `GOMLGO_GO` to a Go 1.26.x executable to select the oracle, source importer,
+interpreter and GOROOT differential corpus together. When unset, selection uses
+`/usr/lib/go-1.26/bin/go` if present, then `go` on `PATH`; an explicitly empty
+value selects `go` on `PATH`. The GoML build also uses `go` on `PATH`, so put the
+selected Go toolchain there. Automatic Go toolchain switching is disabled for
+oracle and interpreter operations. Build and test concurrency default to two;
+set `GOML_BUILD_JOBS` and `GOML_TEST_JOBS` to override them.
+
+Run from this repository root. `just ci` runs formatting, native Go race tests,
+the complete GoML suite, local parser/type differential cases and executable
+smoke checks. Broader GOROOT, mutation and official corpora remain explicit
+commands; recipes using `systemd-run` additionally require a user systemd session.
 
 ```bash
-just gomlgo-test
-just gomlgo-build
-just gomlgo-diff
-just gomlgo-type-test
-just gomlgo-type-diff
-just gomlgo-type-diff-official
-just gomlgo-type-diagnostics-official
-just gomlgo-type-diff-goroot 10 std
-just gomlgo-type-diff-goroot -1 cmd acceptance
-just gomlgo-type-diff-goroot -1 std info
-just gomlgo-type-diff-goroot 1 std acceptance linux arm64 0 none
-just gomlgo-type-diff-goroot-matrix 16
-just gomlgo-type-diff-goroot-tests 16 internal
-just gomlgo-type-diff-goroot-tests 16 external
-just gomlgo-type-mutate-diff 25
-just gomlgo-diff-goroot
-just gomlgo-parse-diff-goroot
-just gomlgo-ast-shape-goroot
-just gomlgo-ast-position-goroot
-just gomlgo-ast-comments-goroot
-just gomlgo-mutate-diff 25
+just toolchain
+just ci
+just test
+just build
+just diff
+just type-test
+just type-diff
+just type-diff-official
+just type-diagnostics-official
+just type-diff-goroot 10 std
+just type-diff-goroot -1 cmd acceptance
+just type-diff-goroot -1 std info
+just type-diff-goroot 1 std acceptance linux arm64 0 none
+just type-diff-goroot-matrix 16
+just type-diff-goroot-tests 16 internal
+just type-diff-goroot-tests 16 external
+just type-mutate-diff 25
+just diff-goroot
+just parse-diff-goroot
+just ast-shape-goroot
+just ast-position-goroot
+just ast-comments-goroot
+just mutate-diff 25
 ```
 
-`just gomlgo-build` writes the CLI and differential runners under `_artifact/gomlgo-build/bin/cmd`. From the repository root:
+`just build` writes the CLI and differential runners under `_artifact/gomlgo-build/bin/cmd`. From the repository root:
 
 ```bash
 _artifact/gomlgo-build/bin/cmd/gomlgo/gomlgo scan FILE
@@ -89,21 +111,34 @@ The GOROOT type differential recipes run their checker in a user systemd scope w
 
 The official type corpus recipes also run in a resource-limited user systemd scope. They invoke one checker process per source file so retained dependency state is released between cases; the hard limits are 10 GiB memory, 2 GiB swap, 256 tasks, and 300% CPU.
 
-`testdata/invalid/` contains recovery smoke cases. `testdata/regressions/` contains minimized differential failures and is checked by `just gomlgo-diff`.
+`testdata/invalid/` contains recovery smoke cases. `testdata/regressions/` contains minimized differential failures and is checked by `just diff`.
 
 ## Compatibility coverage
 
-Differential results depend on the checked-out sources, exact Go 1.26 patch release, target, and selected corpus. Run `bash gomlgo/toolchain/go.sh version` to record the selected reference version. Fixtures that explicitly request older Go language versions remain version-gating regression tests. Use the commands above to obtain current results; historical file counts and zero-difference totals are not a compatibility guarantee.
+Differential results depend on the checked-out sources, exact Go 1.26 patch release, target, and selected corpus. Run `bash toolchain/go.sh version` to record the selected reference version. Fixtures that explicitly request older Go language versions remain version-gating regression tests. Use the commands above to obtain current results; historical file counts and zero-difference totals are not a compatibility guarantee.
 
 | Area | Comparison | Reproduce |
 | --- | --- | --- |
-| Scanner and parser fixtures | Tokens, acceptance, AST shape, positions, and comments | `just gomlgo-diff` |
-| GOROOT scanner and parser | Tokens and normalized AST including comments | `just gomlgo-diff-goroot` |
-| Local type checking | Acceptance, diagnostics, and normalized type information | `just gomlgo-type-diff` |
-| Official Go type corpus | Normalized type information and exact diagnostics | `just gomlgo-type-diff-official` and `just gomlgo-type-diagnostics-official` |
-| Standard-library packages | Acceptance or normalized type information | `just gomlgo-type-diff-goroot -1 std acceptance` or `just gomlgo-type-diff-goroot -1 std info` |
-| Go command packages | Acceptance | `just gomlgo-type-diff-goroot -1 cmd acceptance` |
-| Target and test-package samples | Selected platforms and internal/external tests | `just gomlgo-type-diff-goroot-matrix` and `just gomlgo-type-diff-goroot-tests` |
-| Mutation samples | Parser and type-checker regressions | `just gomlgo-mutate-diff` and `just gomlgo-type-mutate-diff` |
+| Scanner and parser fixtures | Tokens, acceptance, AST shape, positions, and comments | `just diff` |
+| GOROOT scanner and parser | Tokens and normalized AST including comments | `just diff-goroot` |
+| Local type checking | Acceptance, diagnostics, and normalized type information | `just type-diff` |
+| Official Go type corpus | Normalized type information and exact diagnostics | `just type-diff-official` and `just type-diagnostics-official` |
+| Standard-library packages | Acceptance or normalized type information | `just type-diff-goroot -1 std acceptance` or `just type-diff-goroot -1 std info` |
+| Go command packages | Acceptance | `just type-diff-goroot -1 cmd acceptance` |
+| Target and test-package samples | Selected platforms and internal/external tests | `just type-diff-goroot-matrix` and `just type-diff-goroot-tests` |
+| Mutation samples | Parser and type-checker regressions | `just mutate-diff` and `just type-mutate-diff` |
 
 Strict parser diagnostic count and message parity for invalid files is best-effort. Complete `cmd/...` type information, the full cgo-enabled corpus, broad internal/external test-package corpora, and full GOOS/GOARCH matrices are not established compatibility guarantees. Interpreter execution has the separate limits described above.
+
+## Repository origin
+
+This repository preserves the filtered `gomlgo/` history from
+[gomlang/goml](https://github.com/gomlang/goml), split at
+`968667b0732beb8ca6f92795d1a4cbe9feac5dde`. Compiler-product fixtures used by the
+independent tests are checked in here with provenance; tests do not read a
+sibling compiler checkout.
+
+## Ownership and license
+
+As in the source project, no open-source license is currently granted. All
+rights remain reserved by the author until a license is explicitly provided.

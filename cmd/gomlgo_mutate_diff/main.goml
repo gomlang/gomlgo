@@ -35,7 +35,7 @@ fn main() -> () {
     let output = if arguments.len() >= 4 {
         arguments[3]
     } else {
-        "../_artifact/gomlgo-diff/failures"
+        "_artifact/gomlgo-diff/failures"
     };
     match mutation::run(root, output, limit) {
         Ok(summary) => println(
