@@ -24,7 +24,7 @@ The source importer evaluates `//go:build` and `// +build` constraints, GOOS/GOA
 
 This standalone repository requires Linux amd64, Go 1.26.x, a C compiler for
 race tests, `just`, Bash, curl, tar and sha256sum. It builds with the released
-GoML 0.1.59 toolchain; no GoML compiler checkout is needed.
+GoML 0.1.60 toolchain; no GoML compiler checkout is needed.
 
 Install the checksum-pinned release with `just toolchain`, then run `just build`
 or `just test`. The installer writes only to `_artifact/`. Set `GOML` to an
@@ -93,7 +93,7 @@ Generated files named `.goml.go` or `goml_generated.go` use the same standard-li
 
 Standard-library bodies are never interpreted. Used package functions, including concrete generic instances, are linked to stable native call IDs and a generated Go registry. Generic standard-library calls inside interpreted generic functions are specialized with the outer function's concrete type arguments. The execution image places the VM and registry in one process and passes opaque values that directly contain `reflect.Value`; there is no RPC, pipe protocol, serialization, session, or remote object-handle table.
 
-Exported standard-library named structs are registered with their real Go types, so their zero values and addressable pointer receivers retain Go semantics. Used standard-library methods are bound as static method expressions, and function values returned by native calls are invoked directly through the same asynchronous `reflect.Value` bridge. Native slice results preserve both length and capacity. This covers compiler-generated task-scope code using `sync.Mutex`, `sync.WaitGroup`, `context.Context`, and `context.CancelFunc`. Checked-in `gomlc` products for lexical task scope, file I/O, JSON parsing and encoding, and bytes, UTF-8, vector, and collection operations execute with output identical to Go 1.26.
+Exported standard-library named structs are registered with their real Go types, so their zero values and addressable pointer receivers retain Go semantics. Used standard-library methods are bound as static method expressions, and function values returned by native calls are invoked directly through the same asynchronous `reflect.Value` bridge. Native slice results preserve both length and capacity. This covers compiler-generated task-scope code using `sync.Mutex`, `sync.WaitGroup`, `context.Context`, and `context.CancelFunc`. The checked-in `gomlc` lexical task scope product executes with output identical to Go 1.26; its source commit and generated file hashes are recorded in the [fixture provenance](testdata/execute/pure/generated_task_scope/SOURCE.md).
 
 Native calls run on host goroutines and wake the VM through a completion queue. User closures cross the boundary as direct callback tokens and execute on the VM scheduler, preserving captures, panic, and exit behavior. The image generator emits concrete proxies for exported standard-library interfaces and type shells for exported, non-generic user structs with supported fields, including struct tags. Native channels such as values returned by `time.After` participate in blocking receive and receive-only select. `os.Args` contains the image path followed only by arguments after `--`.
 
