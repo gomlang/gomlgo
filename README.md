@@ -24,7 +24,7 @@ The source importer evaluates `//go:build` and `// +build` constraints, GOOS/GOA
 
 This standalone repository requires Linux amd64, Go 1.26.x, a C compiler for
 race tests, `just`, Bash, curl, tar and sha256sum. It builds with the released
-GoML 0.1.60 toolchain; no GoML compiler checkout is needed.
+GoML 0.1.63 toolchain; no GoML compiler checkout is needed.
 
 Install the checksum-pinned release with `just toolchain`, then run `just build`
 or `just test`. The installer writes only to `_artifact/`. Set `GOML` to an
